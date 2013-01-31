@@ -48,4 +48,95 @@ Questions to address:
 \item As we discussed, the factor graph is densely connected. But for a given structure, only a few variable nodes $y_t$ contribute. Need to work this out precisely.
 \end{enumerate}
 
+\labday{Tuesday, January 29, 2013}
+
+More fleshing out of the previous notes.  Notation for variables and factors:
+\begin{enumerate}
+\item $y_{ij}$ is the value associated with the dynamic programming
+  table entry $i,j$.
+\item $d_{ij}$ is the decision variable for table entry $i,j$.  The
+  decision variable tells what parent node was used to reach $i,j$.
+  The value of $d_{ij}$ is just some $i',j'$.
+\item $x_{ij} = \{0,1\}$ tells us whether entry $i,j$ is part of the
+  solution path.
+\item $\alpha_{ij}$ is the set of parents for table entry $i,j$.  This
+  defines the factors.  We write $y_{\alpha}$ for the list of values
+  $\{y_{t_1}, y_{t_2}, ...\}$ where $t_k$ is a variable node connected
+  to $\alpha$. Let $\alpha*$ denote the final factor node.
+\end{enumerate}
+
+To apply SDPP-type stuff, we need to define a quality and diversity
+score for each factor. For $\alpha \neq \alpha*$, the (non-negative)
+quality score $q(y_{\alpha})=1$ if the list $y_{\alpha}$ is correctly
+computed, that is, the score $y_{ij}$ follows from the decision
+$d_{ij}$ and corresponding parent value $y_{i'j'}$ (and
+$q(y_{\alpha})=0$ otherwise). For $\alpha*$, $q(y_{\alpha*})=y_{ij}$,
+the score of the entire structure.  For any factor $\alpha$, the
+(unit-length) diversity feature vector is simply an indicator
+$\phi(y_{\alpha}) = x_{ij}$, that is, whether the entry $i,j$ is on
+the solution path.  The quality and diversity functions for each node
+are combined into a four-dimensional weight vector
+$w_{\alpha}(y_{\alpha})$:
+\[
+w_{\alpha}(y_{\alpha})=(q^2(y_{\alpha}), q^2(y_{\alpha})\phi_r(y_{\alpha}), q^2(y_{\alpha})\phi_l(y_{\alpha}), q^2(y_{\alpha})\phi_r(y_{\alpha})\phi_l(y_{\alpha}) )
+\]
+
+Inference for the SDPP involves message-passing on the semi-ring with
+operations $\oplus$ and $odot$.  We have messages from variables to
+factors $m_{t \rightarrow \alpha}$ and from factors to variables
+$m_{\alpha \rightarrow t}$.  The messages from variables to factors
+are given by
+\[
+m_{t \rightarrow \alpha} = \otimes_{\alpha' \in F(t)\\ \alpha} m_{\alpha' \rightarrow t}(y_t)
+\]
+which isn't too bad to compute since each variable $y_t$ participates
+in relatively few factors: decision-variables participate in only one
+factor; $y_{ij}$ participate once as children and a few times as
+parents (depending on the structure of the dynamic program).
+
+and the messages from factors to variables are given by 
+\[
+m_{\alpha \rightarrow t}(y_t) = \oplus_{y_\alpha \sim y_t} [ w_\alpha( y_\alpha ) \otimes_{t' \in \alpha \\t} m_{t' \rightarrow \alpha} ]
+\]
+where we write $y_\alpha \sim y_t$ to indicate all sets $y_\alpha$
+that are consistent with the given value of $y_t$.  At first, it may
+seem complicated to compute the second set of messages because we must
+consider all (exponentially many) sets $y_\alpha$ with a given setting
+for $y_t$.  However, we can use some tricks because only a few
+variables contribute to the quality and diversity scores.
+Specifically, there are four cases:
+\begin{enumerate}
+\item $y_t = y_{ij}$ (child node).  For a given setting of the child
+  $y_{ij}$, we need to consider all combinations of the path variable,
+  the decision variable, and the corresponding parent.  The values of
+  all the other possible parents don't contribute, so we can just
+  multiply the inner term $[ w_\alpha( y_\alpha ) \otimes_{t' \in
+      \alpha \\t} m_{t' \rightarrow \alpha} ]$ by the product of the
+  number of settings for all the other parent variables.
+\item $y_t = y_{i'j'}$ (a parent).  For each value of the parent, we
+  consider two terms: first, when the parent is the corresponding
+  parent given the setting of $d_{ij}$ (need to sum over all settings
+  of $y_{ij}$) and all other settings (which is just a large product
+  over the values that the child and other parents may take on).
+\item $y_t = d_{ij}$.  We only need to consider all values of the
+  child node and all values of the corresponding parent node,
+  multiplied by the product of the number of settings for al the other
+  parent variables.
+\item $y_t = x_{ij}$. WE NEED TO ARTICULATE THIS ONE BETTER: I THINK
+  WE NEED ANOTHER SET OF FACTORS CONNECTING $d_{ij}'s$ and $x_{ij}'s$
+  that ensure consistency.
+\end{enumerate}
+
+If the factor graph has loops, then we must normalize the messages to
+keep them from blowing up.  To do so, we
+FILL IN HERE RE NORMALIZATION
+
+Once we do the message-passing on the semi-ring, we can use the values
+FILL IN HERE RE WHY WE DID THE MESSAGE PASSING
+to compute the elements of the matrix $C$.
+FILL IN HERE RE THE SDPP SAMPLER
+
+
 \end{document}
+
+
